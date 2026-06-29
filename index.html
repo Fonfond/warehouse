@@ -32,10 +32,10 @@
 
     <!-- Навигация -->
     <div class="tab-bar">
-        <button class="tab-btn active" onclick="openTab('stock')">🏬 Товары</button>
-        <button class="tab-btn" onclick="openTab('add')">➕ Приход</button>
-        <button class="tab-btn" onclick="openTab('take')">➖ Взять</button>
-        <button class="tab-btn" onclick="openTab('journal')">📋 Журнал</button>
+        <button class="tab-btn active" onclick="openTab('stock', event)">🏬 Товары</button>
+        <button class="tab-btn" onclick="openTab('add', event)">➕ Приход</button>
+        <button class="tab-btn" onclick="openTab('take', event)">➖ Взять</button>
+        <button class="tab-btn" onclick="openTab('journal', event)">📋 Журнал</button>
     </div>
 
     <!-- Контент вкладок -->
@@ -55,7 +55,7 @@
     </div>
     <div id="take" class="tab-content">
         <h3>Взять со склада</h3>
-        <input type="text" id="searchItem" placeholder="Поиск по названию..." oninput="renderStockList()">
+        <input type="text" id="searchItem" placeholder="Поиск по названию..." oninput="renderTakeList()">
         <div id="takeList"></div>
     </div>
     <div id="journal" class="tab-content"></div>
