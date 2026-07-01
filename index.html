@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Складской Учет</title>
+    <!-- PWA манифест -->
+    <link rel="manifest" href="manifest.json">
+    <!-- Иконки для iOS -->
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📦</text></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📦</text></svg>">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <style>
+        * { box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            margin: 0; 
+            padding: 10px; 
+            background: #f5f5f5;
+            min-height: 100vh;
+        }
+        .header { 
+            background: white; 
+            padding: 15px; 
+            border-radius: 12px; 
+            margin-bottom: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .header h1 { margin: 0 0 5px 0; font-size: 24px; }
+        
+        #syncStatus { 
+            font-size: 12px; 
+            padding: 5px 10px; 
+            border-radius: 15px; 
+            display: inline-block;
+            margin-top: 5px;
+        }
+        .status-online { background: #e8f5e9; color: #2e7d32; }
+        .status-offline { background: #fff3e0; color: #e65100; }
+        .status-syncing { background: #e3f2fd; color: #1565c0; }
+        .status-error { background: #ffebee; color: #c62828; }
+        
+        .tab-bar { 
+            display: flex; 
+            margin-bottom: 15px; 
+            background: white; 
+            border-radius: 12px; 
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .tab-btn { 
+            flex: 1; 
+            padding: 12px 5px; 
+            text-align: center; 
+            border: none; 
+            background: none; 
+            cursor: pointer; 
+            font-weight: 600;
+            font-size: 13px;
+            color: #666;
+            transition: all 0.2s;
+        }
+        .tab-btn.active { 
+            background: #007aff; 
+            color: white; 
+        }
+        
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        .card { 
+            background: white;
+            border: 1px solid #e0e0e0; 
+            padding: 12px; 
+            margin-bottom: 8px; 
+            border-radius: 12px; 
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        
+        button { 
+            padding: 10px 20px; 
+            background: #007aff; 
+            color: white; 
+            border: none; 
+            border-radius: 10px; 
+            cursor: pointer; 
+            font-size: 15px;
+            font-weight: 600;
+            transition: opacity 0.2s;
+        }
+        button:active { opacity: 0.7; }
+        button.danger { background: #ff3b30; }
+        button.success { background: #34c759; }
+        button.secondary { background: #8e8e93; }
+        
+        input, select { 
+            padding: 12px; 
+            margin: 5px 0; 
+            border: 1px solid #e0e0e0; 
+            border-radius: 10px; 
+            width: 100%; 
+            font-size: 16px;
+            background: white;
+        }
+        input:focus { outline: none; border-color: #007aff; }
+        
+        .camera-btn { 
+            background: #34c759; 
+            font-size: 18px; 
+            width: 100%;
+            padding: 15px;
+        }
+        
+        .edit-area { 
+            border: 2px dashed #007aff; 
+            padding: 15px; 
+            margin-top: 10px; 
+            border-radius: 12px;
+            background: #f8f9ff;
+        }
+        
+        .photo-thumb {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+        
+        hr { 
+            border: none; 
+            border-top: 1px solid #e0e0e0; 
+            margin: 20px 0; 
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 5px;
+            margin-top: 8px;
+        }
+        .btn-group button {
+            flex: 1;
+            font-size: 13px;
+            padding: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📦 Склад</h1>
+        <span id="syncStatus" class="status-syncing">🔄 Загрузка...</span>
+    </div>
+
+    <!-- Навигация -->
+    <div class="tab-bar">
+        <button class="tab-btn active" onclick="openTab('stock', event)">🏬 Товары</button>
+        <button class="tab-btn" onclick="openTab('add', event)">➕ Приход</button>
+        <button class="tab-btn" onclick="openTab('take', event)">➖ Взять</button>
+        <button class="tab-btn" onclick="openTab('journal', event)">📋 Журнал</button>
+    </div>
+
+    <!-- Вкладка Товары -->
+    <div id="stock" class="tab-content active">
+        <div id="stockList"></div>
+    </div>
+
+    <!-- Вкладка Приход -->
+    <div id="add" class="tab-content">
+        <h3>✏️ Ручной ввод</h3>
+        <input type="text" id="newName" placeholder="Наименование материала">
+        <input type="number" id="newQty" placeholder="Количество" min="1">
+        <input type="text" id="newUnit" placeholder="Ед. изм (шт, кг, м)" value="шт">
+        <button onclick="addItem()" style="width:100%;">✅ Добавить на склад</button>
+        
+        <hr>
+        
+        <h3>📸 Загрузить из фото списка</h3>
+        <p style="color:#666; font-size:14px;">Сфотографируйте список. Приложение распознает текст, вы сможете исправить ошибки перед сохранением.</p>
+        <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none">
+        <button class="camera-btn" onclick="document.getElementById('cameraInput').click()">📸 Сканировать список</button>
+        <div id="scanResult" class="edit-area" style="display:none;"></div>
+        <button id="saveScannedBtn" style="display:none; width:100%; margin-top:10px;" onclick="saveScannedData()">💾 Сохранить распознанное</button>
+    </div>
+
+    <!-- Вкладка Взять -->
+    <div id="take" class="tab-content">
+        <h3>🔍 Взять со склада</h3>
+        <input type="text" id="searchItem" placeholder="Поиск по названию..." oninput="renderTakeList()">
+        <div id="takeList"></div>
+    </div>
+
+    <!-- Вкладка Журнал -->
+    <div id="journal" class="tab-content">
+        <h3>📋 Журнал операций</h3>
+        <div id="journalList"></div>
+    </div>
+
+    <!-- Библиотеки -->
+    <script src="https://cdn.jsdelivr.net/npm/pouchdb@8.0.1/dist/pouchdb.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
